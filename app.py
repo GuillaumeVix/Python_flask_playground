@@ -58,3 +58,6 @@ def get_books_by_isbn(isbn):
     return jsonify(return_value)
     
 app.run(port=5000)
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", debug = True)
