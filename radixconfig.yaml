@@ -8,10 +8,11 @@ spec:
       build:
         from: master
   components:
-    - name: python-flask
+    - name: app
       src: "."
       publicPort: http
       ports:
        - name: http
-         port: 80
+         port: 8000
       replicas: 1
+      public: true
