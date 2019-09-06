@@ -1,14 +1,14 @@
 apiVersion: radix.equinor.com/v1
 kind: RadixApplication
 metadata:
-  name: r-experiment
+  name: python-flask
 spec:
   environments:
     - name: dev
       build:
         from: master
   components:
-    - name: r-experiment
+    - name: python-flask
       src: "."
       publicPort: http
       ports:
