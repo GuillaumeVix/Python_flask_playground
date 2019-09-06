@@ -1,4 +1,4 @@
 FROM python:3
-ADD api.py /
+ADD app.py /
 RUN pip install flask
 CMD ["python", "./app.py"]

@@ -9,7 +9,7 @@ spec:
         from: master
   components:
     - name: r-experiment
-      src: .
+      src: "."
       publicPort: http
       ports:
        - name: http
