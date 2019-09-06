@@ -7,9 +7,9 @@ Payground for personal test and use of the python flask functionalities.
 
 ## Usage
 
-Shoudln't be used outside of testing purposes.
+Shouldn't be used outside of testing purposes.
 
 ## History
 
-08/2019: Set-up the project
-09/2019: Integration with Radix
++ 08/2019: Set-up the project
++ 09/2019: Integration with Radix
