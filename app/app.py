@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
+import json
 
 app = Flask(__name__)
 
@@ -38,10 +39,22 @@ def add_book():
     #return jsonify(request.get_json())
     request_data = request.get_json()
     if(validBookObject(request_data)):
-        books.insert(0, request_data)
-        return "True"
+        new_book = {
+            "name": request_data['name'],
+            "price": request_data['price'],
+            "isbn": request_data['isbn']
+        }
+        books.insert(0, new_book)
+        response = Response("", 201, mimetype='application/json')
+        response.headers['Location'] = "/books/" + str(new_book['isbn'])
+        return response
     else:
-        return "False"
+        invalidBookObjectErrorMsg = {
+            "error": "Invalid book object passed in request",
+            "helpString": "Try a valid format? =)"
+        }
+        response = Response(json.dumps(invalidBookObjectErrorMsg), status=400, mimetype='application/json')
+        return response
     
 @app.route('/books/<int:isbn>')
 def get_books_by_isbn(isbn):
@@ -54,7 +67,51 @@ def get_books_by_isbn(isbn):
             }
     return jsonify(return_value)
     
-#app.run(port=5000)
+
+#PUT
+@app.route('/books/<int:isbn>', methods=['PUT'])
+def replace_book(isbn):
+    request_data = request.get_json()
+
+   #if(not valid_put_request_data(request_data)):
+   #    invalidBookObjectErrorMsg = {
+   #        "error": "Valid book must be passed in the request",
+   #        "helpstring": "Require name and price. ISBN is the URL"
+   #    }
+   #    response = Response(json.dumps(invalidBookObjectErrorMsg), status=400, mimetype='application/json')
+   #    return response
+
+    new_book = {
+        'name': request_data['name'],
+        'price': request_data['price'],
+        'isbn': isbn
+    }
+
+    # Verify if the isbn/book exists
+    i = 0
+    for book in books:
+        currentIsbn = book["isbn"]
+        if currentIsbn == isbn:
+            books[i] = new_book
+        i+=1
+        response = Response("", status=204)
+        return response
+
+@app.route('/books/<int:isbn>', methods=['PATCH'])
+def update_book(isbn):
+    request_data = request.get_json()
+    update_book = {}
+    if("name" in request_data):
+        update_book["name"] = request_data['name']
+    if("price" in request_data):
+        update_book["price"] = request_data['price']
+    for book in books:
+        if book["isbn"] == isbn:
+            book.update(update_book)
+    response = Response("", status=204)
+    response.headers['Location'] = "/books/" + str(isbn)
+    return response
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug = True, port=8000)
+    #app.run(host="0.0.0.0", debug = True, port=8000)
+    app.run(host="127.0.0.1", debug = True, port=8000)
