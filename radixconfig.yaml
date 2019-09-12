@@ -14,5 +14,9 @@ spec:
       ports:
        - name: http
          port: 8000
-      replicas: 1
       public: true
+      environmentConfig:
+        - environment: dev
+          replicas: 1
+          variables:
+            PYFLASK_VARIABLE_TRY: "python-flask-env-var-test"
