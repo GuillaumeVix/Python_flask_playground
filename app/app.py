@@ -1,21 +1,33 @@
 from flask import Flask, jsonify, request, Response
+from BookModel import *
+from settings import *
 import json
+from settings import *
 
-app = Flask(__name__)
+import jwt, datetime
 
-books = [
-    {
-        'name': 'Green Eggs and Ham',
-        'price': 7.99,
-        'isbn': 978039400165
-    },
-    {
-        'name': 'The Cat in the Hat',
-        'price': 6.99,
-        'isbn': 9782371000193
-    }
-]
+# Configure a key
+app.config['SECRET_KEY'] = 'meow'
 
+#books = [
+#    {
+#        'name': 'Green Eggs and Ham',
+#        'price': 7.99,
+#        'isbn': 978039400165
+#    },
+#    {
+#        'name': 'The Cat in the Hat',
+#        'price': 6.99,
+#        'isbn': 9782371000193
+#    }
+#]
+
+
+@app.route('/login')
+def get_token():
+    expiration_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=100)
+    token = jwt.encode({'exp': expiration_date}, app.config['SECRET_KEY'], algorithm='HS256')
+    return token
 
 @app.route('/')
 def hello_world():
@@ -24,7 +36,12 @@ def hello_world():
 #GET /books
 @app.route('/books')
 def get_books():
-    return jsonify({'books': books})
+    token = request.args.get('token')
+    try:
+        jwt.decode(token, app.config['SECRET_KEY'])
+    except:
+        return jsonify({'error': 'Need a valid token to view this page'}), 401
+    return jsonify({'books': Book.get_all_books()})
     
 #Define valid book object
 def validBookObject(bookObject):
@@ -39,14 +56,9 @@ def add_book():
     #return jsonify(request.get_json())
     request_data = request.get_json()
     if(validBookObject(request_data)):
-        new_book = {
-            "name": request_data['name'],
-            "price": request_data['price'],
-            "isbn": request_data['isbn']
-        }
-        books.insert(0, new_book)
+        Book.add_book(request_data['name'], request_data['price'], request_data['isbn'])
         response = Response("", 201, mimetype='application/json')
-        response.headers['Location'] = "/books/" + str(new_book['isbn'])
+        response.headers['Location'] = "/books/" + str(request_data['isbn'])
         return response
     else:
         invalidBookObjectErrorMsg = {
@@ -58,13 +70,7 @@ def add_book():
     
 @app.route('/books/<int:isbn>')
 def get_books_by_isbn(isbn):
-    return_value = {}
-    for book in books:
-        if book["isbn"] == isbn:
-            return_value = {
-                'name': book["name"],
-                'price': book["price"]
-            }
+    return_value = Book.get_book(isbn)
     return jsonify(return_value)
     
 
@@ -80,38 +86,34 @@ def replace_book(isbn):
    #    }
    #    response = Response(json.dumps(invalidBookObjectErrorMsg), status=400, mimetype='application/json')
    #    return response
-
-    new_book = {
-        'name': request_data['name'],
-        'price': request_data['price'],
-        'isbn': isbn
-    }
-
-    # Verify if the isbn/book exists
-    i = 0
-    for book in books:
-        currentIsbn = book["isbn"]
-        if currentIsbn == isbn:
-            books[i] = new_book
-        i+=1
-        response = Response("", status=204)
-        return response
+    Book.replace_book(isbn, request_data['name'], request_data['price'])
+    response = Response("", status=204)
+    return response
 
 @app.route('/books/<int:isbn>', methods=['PATCH'])
 def update_book(isbn):
     request_data = request.get_json()
     update_book = {}
     if("name" in request_data):
-        update_book["name"] = request_data['name']
+        Book.update_book_name(isbn, request_data['name'])
     if("price" in request_data):
-        update_book["price"] = request_data['price']
-    for book in books:
-        if book["isbn"] == isbn:
-            book.update(update_book)
+        Book.update_book_price(isbn, request_data['price'])
     response = Response("", status=204)
     response.headers['Location'] = "/books/" + str(isbn)
     return response
 
+@app.route('/books/<int:isbn>', methods=['DELETE'])
+def delete_book(isbn):
+    if(Book.delete_book(isbn)):
+        response = Response("", status=204)
+        return response
+    invalidBookObjectErrorMsg = {
+        "error": "Book with the ISBN number was not found, thus unable to delete"
+    }    
+    response = Response(json.dumps(invalidBookObjectErrorMsg), status=404, mimetype='application/json')
+    return response
+
+
 if __name__ == '__main__':
-    #app.run(host="0.0.0.0", debug = True, port=8000)
-    app.run(host="127.0.0.1", debug = True, port=8000)
+    app.run(host="0.0.0.0", debug = True, port=8000)
+    #app.run(host="127.0.0.1", debug = True, port=8000)
