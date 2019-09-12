@@ -2,8 +2,13 @@ from flask import Flask, jsonify, request, Response
 from BookModel import *
 from settings import *
 import json
+import os
 
 import jwt, datetime
+
+# Define env variable to see if it is displayed in Radix Dashboard
+os.environ['USER_COMPANY'] = 'EQUINOR'
+print(os.environ['USER_COMPANY'])
 
 # Configure a key
 app.config['SECRET_KEY'] = 'meow'
